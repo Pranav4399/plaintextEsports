@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Plaintextesports</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Local CSS File -->
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body
+    x-data="{ darkMode: localStorage.getItem('dark') === 'true' }"
+    x-init="$watch('darkMode', val => localStorage.setItem('dark', val))"
+    :class="[darkMode ? 'ui-dark-theme' : 'ui-light-theme']"
+  >
+    <main id="container" class="container">
+      <!-- Site name and darkmode -->
+      <div class="flex justify-between margin-5">
+        <span class="bold">plaintextesports</span>
+        <div
+          class="dark-mode-div"
+          x-data="{ 
+            isDarkMode: false,
+            switchLabel() {
+                this.isDarkMode = !this.isDarkMode;
+            } 
+        }"
+        >
+          <input
+            id="dark-mode-input"
+            class="dark-mode-input"
+            type="checkbox"
+            @click="darkMode = !darkMode; switchLabel();"
+          />
+          <label
+            x-show="isDarkMode"
+            class="dark-mode-label"
+            for="dark-mode-input"
+            >Light mode</label
+          >
+          <label
+            x-show="!isDarkMode"
+            class="dark-mode-label"
+            for="dark-mode-input"
+            >Dark mode</label
+          >
+        </div>
+      </div>
+      <!-- Current time -->
+      <div
+        class="flex justify-between"
+        x-data="{
+            time: new Date(),
+        }"
+      >
+        <span x-text="dayjs(time).format('hh:mm A');"></span>
+      </div>
+      <br />
+      <div class="flex justify-between" x-data="dateSwitcher()" x-init="init()">
+        <!-- Yesterday -->
+        <a
+          href="#"
+          id="prevDate"
+          x-text="formatDateString(getDate(-2))"
+          @click.prevent="switchDates(-1); $dispatch('data-update', new Date(getDate(-1)).toISOString().slice(0, 10))"
+          :class="{ 'disabled-link': currentDate <= minDate }"
+          >Yesterday</a
+        >
+        <!-- Today -->
+        <a
+          href="#"
+          id="currentDate"
+          x-text="formatDateString(getDate(-1))"
+          @click.prevent="switchDates(0);"
+          :class="'disabled-link'"
+          >Today</a
+        >
+        <!-- Tomorrow -->
+        <a
+          href="#"
+          id="nextDate"
+          x-text="formatDateString(currentDate)"
+          @click.prevent="switchDates(1); $dispatch('data-update', new Date(getDate(-1)).toISOString().slice(0, 10))"
+          :class="{ 'disabled-link': currentDate >= maxDate }"
+          >Tomorrow</a
+        >
+      </div>
+      <br />
+      <!-- Data -->
+      <div
+        id="data-container"
+        x-data="fetchData()"
+        x-init="getData(dayjs(dayjs().subtract(1, 'day')).format('YYYY-M-DD'))"
+        @data-update.window="data=[]; getData($event.detail)"
+      >
+        <h4 class="flex justify-center" x-show="isLoading">Loading...</h4>
+        <template x-for="league in data[0]?.leagues">
+          <div>
+            <p id="league-title" x-text="league.leaguename"></p>
+            <div id="league-list" class="flex flex-wrap justify-between">
+              <template x-for="match in league.matches">
+                <div class="box" x-if="match.radiant_name && match.dire_name">
+                  <div id="radiant" class="flex justify-between">
+                    <span class="box-title" x-text="match.radiant_name ? match.radiant_name + (match.radiant_win ? ' ★' : '') : 'Team not found'"></span>
+                    <span class="box-title" x-text="match.radiant_score"></span>
+                  </div>
+                  <div id="dire" class="flex justify-between">
+                    <span class="box-title" x-text="match.dire_name ? match.dire_name + (match.radiant_win ? '' : ' ★') : 'Team not found'"></span>
+                    <span class="box-title" x-text="match.dire_score"></span>
+                  </div>
+                </div>
+              </template>
+              <template x-if="!match.radiant_name || !match.dire_name">
+                <div>
+                  <p>Error: Missing team name</p>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+      <!-- Acknowledgement -->
+      <div class="text-center">
+        <span>
+          Created with 🖤 by
+          <a href="https://www.pranavsriram.dev/" target="_blank">Pranav</a>.
+          Design inspired from<a
+            href="https://plaintextsports.com/"
+            target="_blank"
+          >
+            plaintextsports.</a
+          >
+        </span>
+      </div>
+    </main>
+
+    <!-- Local JS File -->
+    <script defer src="./index.js"></script>
+    <!-- CDN JS File -->
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <script
+      src="https://unpkg.com/htmx.org@1.8.5"
+      integrity="sha384-7aHh9lqPYGYZ7sTHvzP1t3BAfLhYSTy9ArHdP3Xsr9/3TlGurYgcPBoFmXX2TX/w"
+      crossorigin="anonymous"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/utc.js"></script>
+    <script>
+      dayjs.extend(window.dayjs_plugin_utc);
+    </script>
+  </body>
+</html>
